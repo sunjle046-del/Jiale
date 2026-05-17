@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Freshness Sorting Machine</title>
+    <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --transition-speed: 0.5s;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+        }
+
+        /* --- ALL SCREENS KEEP UNIFORM PROPORTIONS --- */
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: none;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: opacity var(--transition-speed) ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* --- SCREEN 1: START --- */
+        #screen-1 {
+            background-image: url('web-01.png');
+        }
+
+        .circle-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #circle-2 {
+            background-image: url('circle 2.png');
+            z-index: 1;
+        }
+
+        #circle-1 {
+            background-image: url('circle 1.png'); 
+            z-index: 2;
+            animation: rotateClockwise 20s linear infinite;
+        }
+
+        @keyframes rotateClockwise {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        #start-screen-1 {
+            position: absolute;
+            left: 50%;
+            top: 56%;
+            transform: translate(-50%, -50%);
+            width: 210px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 50;
+            background: transparent;
+        }
+
+        /* --- SCREEN 2 --- */
+        #screen-2 {
+            background-image: url('web-02.png');
+        }
+
+        #start-screen-2 {
+            position: absolute;
+            left: 50%;
+            top: 82%;
+            transform: translate(-50%, -50%);
+            width: 210px;
+            height: 70px;
+            cursor: pointer;
+            z-index: 50;
+            background: transparent;
+        }
+
+        /* --- SCREEN 3: SORTING --- */
+        #screen-3 {
+            background-image: url('web-07.png');
+        }
+
+        .basket-counter {
+            position: absolute;
+            top: 82px;
+            right: 72px;
+            width: 48px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        .apple-conveyor {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+            overflow: visible;
+            pointer-events: none; 
+        }
+
+        .apple-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .apple-item {
+            width: 25vw;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: filter 0.4s ease;
+            filter: blur(8px);
+        }
+
+        .apple-item.active {
+            filter: blur(0px);
+        }
+
+        .apple-item img {
+            width: 260px;
+            height: 260px;
+            object-fit: contain;
+        }
+
+        .empty-apple-slot {
+            visibility: hidden;
+        }
+
+        .error-placeholder {
+            height: 260px;
+            width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffe6e6;
+            border: 3px solid red;
+            color: red;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            word-wrap: break-word;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .controls {
+            position: absolute;
+            left: 0;
+            bottom: 13%;
+            width: 100%;
+            height: 90px;
+            pointer-events: none; 
+            z-index: 80;
+        }
+
+        .control-btn {
+            position: absolute;
+            width: 190px;
+            height: 70px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: auto; 
+            z-index: 90;
+        }
+
+        #btn-choose {
+            left: 38%;
+            transform: translateX(-50%);
+        }
+
+        #btn-waste {
+            left: 62%;
+            transform: translateX(-50%);
+        }
+
+        /* --- POPUP REJECT --- */
+        #reject-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 800px;
+            height: 500px;
+            background-image: url('reject.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: none;
+            z-index: 100;
+        }
+
+        #reject-popup.show {
+            display: block;
+            animation: popupIn 0.3s forwards;
+        }
+
+        @keyframes popupIn {
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* --- SCREEN 4 & 5 BACKGROUNDS --- */
+        #screen-4 {
+            background-image: url('web-04.png');
+        }
+        
+        #screen-5 {
+            background-image: url('web-05.png');
+        }
+
+        .wasted-text {
+            display: none;
+        }
+
+        /* Unified container positioning and increased size for web-04 and web-05 */
+        #final-basket,
+        #wasted-apples-on-label-page {
+            position: absolute;
+            left: 29%;
+            top: 26%;
+            width: 40%;
+            height: 52%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 8px;
+            z-index: 25;
+            pointer-events: auto;
+            overflow: visible;
+        }
+
+        #final-basket .wasted-apple,
+        #wasted-apples-on-label-page .wasted-apple {
+            width: clamp(150px, 15vw, 280px);
+            height: clamp(150px, 15vw, 280px);
+            margin: -35px;
+            object-fit: contain;
+            cursor: pointer;
+            pointer-events: auto;
+            
+            --rotation: 0deg;
+            transform: rotate(var(--rotation));
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        #final-basket .wasted-apple:hover,
+        #wasted-apples-on-label-page .wasted-apple:hover {
+            transform: rotate(var(--rotation)) scale(1.08);
+            filter: brightness(1.1);
+        }
+
+        div.wasted-apple.error-placeholder {
+            font-size: 10px;
+            padding: 2px;
+            background-color: white;
+            border: 1px solid red;
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+        }
+
+        /* UPDATED: Label Display specific to Screen 5 - shifted down to 24% */
+        #label-display {
+            position: absolute;
+            left: 75.2%;
+            top: 24%;
+            width: 19.8%;
+            height: 56%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        #label-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="screen-1" class="screen active">
+        <div id="circle-2" class="circle-layer"></div>
+        <div id="circle-1" class="circle-layer"></div>
+        <div id="start-screen-1" onclick="nextScreen(2)"></div>
+    </div>
+
+    <div id="screen-2" class="screen">
+        <div id="start-screen-2" onclick="nextScreen(3)"></div>
+    </div>
+
+    <div id="screen-3" class="screen">
+        <div class="basket-counter" id="basket-count">0</div>
+        
+        <div class="apple-conveyor">
+            <div class="apple-container" id="apple-list">
+                </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-btn" id="btn-choose" onclick="sortApple('choose')">CHOOSE</div>
+            <div class="control-btn" id="btn-waste" onclick="sortApple('waste')">WASTE</div>
+        </div>
+
+        <div id="reject-popup"></div>
+    </div>
+
+    <div id="screen-4" class="screen">
+        <div id="final-basket"></div>
+        <div class="wasted-text" id="final-stats">You wasted 0 apples. Click to view them.</div>
+    </div>
+
+    <div id="screen-5" class="screen">
+        <div id="wasted-apples-on-label-page"></div>
+        <div id="label-display"></div>
+    </div>
+
+    <script>
+        // --- STRICTLY .png LOCAL ASSET PATHS ---
+        const apples = [
+            "apple01.png", "apple02.png", "apple03.png", "apple04.png", "apple05.png",
+            "apple06.png", "apple07.png", "apple08.png", "apple09.png", "apple10.png"
+        ];
+
+        const labels = [
+            "label01.png", "label02.png", "label03.png", "label04.png", "label05.png",
+            "label06.png", "label07.png", "label08.png", "label09.png", "label10.png"
+        ];
+
+        let decisionIndex = 0; 
+        let wastedCount = 0; 
+        let wastedApples = [];
+
+        // Navigation
+        function nextScreen(screenNumber) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenNumber}`).classList.add('active');
+            
+            if(screenNumber === 3) initConveyor();
+            if(screenNumber === 4) showFinalResults();
+        }
+
+        // Screen 3 Logic: Conveyor Initialization
+        function initConveyor() {
+            decisionIndex = 0; 
+            renderAppleRow();
+        }
+
+        function renderAppleRow() {
+            const container = document.getElementById('apple-list');
+            container.innerHTML = '';
+
+            const visibleIndexes = [
+                decisionIndex - 2,
+                decisionIndex - 1,
+                decisionIndex,
+                decisionIndex + 1,
+                decisionIndex + 2
+            ];
+
+            visibleIndexes.forEach((appleIndex, positionIndex) => {
+                const div = document.createElement('div');
+                div.className = 'apple-item';
+
+                if (positionIndex === 2) {
+                    div.classList.add('active');
+                }
+
+                if (appleIndex >= 0 && appleIndex < apples.length) {
+                    const img = document.createElement('img');
+                    img.src = apples[appleIndex];
+                    img.alt = 'apple ' + (appleIndex + 1);
+
+                    img.onerror = function() {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'error-placeholder';
+                        placeholder.innerText = 'Missing: ' + apples[appleIndex];
+                        div.innerHTML = '';
+                        div.appendChild(placeholder);
+                    };
+
+                    div.appendChild(img);
+                } else {
+                    div.classList.add('empty-apple-slot');
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        function sortApple(action) {
+            if (decisionIndex >= apples.length) return;
+
+            const activeIndex = decisionIndex;
+
+            if (action === 'choose') {
+                // Do not change the top-right counter
+                advanceDecision();
+                return;
+            }
+
+            if (action === 'waste') {
+                wastedCount++;
+                document.getElementById('basket-count').innerText = wastedCount;
+
+                wastedApples.push({
+                    path: apples[activeIndex],
+                    index: activeIndex
+                });
+
+                showRejectPopupThenAdvance();
+                return;
+            }
+        }
+
+        function showRejectPopupThenAdvance() {
+            const popup = document.getElementById('reject-popup');
+            popup.classList.add('show');
+
+            setTimeout(() => {
+                popup.classList.remove('show');
+                advanceDecision();
+            }, 1500);
+        }
+
+        function advanceDecision() {
+            decisionIndex++;
+
+            if (decisionIndex >= apples.length) {
+                setTimeout(() => nextScreen(4), 500);
+            } else {
+                renderAppleRow();
+            }
+        }
+
+        // Screen 4 Logic: Results
+        function showFinalResults() {
+            const basket = document.getElementById('final-basket');
+            
+            basket.innerHTML = '';
+            wastedApples.forEach(item => {
+                const img = document.createElement('img');
+                img.src = item.path;
+                img.className = 'wasted-apple';
+                
+                const rot = Math.random() * 40 - 20;
+                img.style.setProperty('--rotation', `${rot}deg`);
+                
+                img.onclick = function() {
+                    showLabelPage(item.index);
+                };
+                
+                img.onerror = function() {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'error-placeholder wasted-apple';
+                    placeholder.style.setProperty('--rotation', `${rot}deg`);
+                    placeholder.innerText = item.path;
+                    placeholder.onclick = function() {
+                        showLabelPage(item.index);
+                    };
+                    basket.replaceChild(placeholder, img);
+                };
+                
+                basket.appendChild(img);
+            });
+        }
+
+        // --- Screen 5 Multi-Label Logic ---
+        function showLabelPage(index) {
+            nextScreen(5);
+            renderLabel(index);
+            renderWastedApplesOnLabelPage();
+        }
+
+        function renderLabel(index) {
+            if (index < 0 || index >= labels.length) {
+                console.error('Invalid label index:', index);
+                return;
+            }
+
+            const labelDisplay = document.getElementById('label-display');
+            labelDisplay.innerHTML = '';
+
+            const labelImg = document.createElement('img');
+            labelImg.src = labels[index];
+            labelImg.alt = 'label for apple ' + (index + 1);
+
+            labelImg.onerror = function() {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'error-placeholder';
+                placeholder.innerText = 'Missing:\n' + labels[index];
+                labelDisplay.innerHTML = '';
+                labelDisplay.appendChild(placeholder);
+            };
+
+            labelDisplay.appendChild(labelImg);
+        }
+
+        function renderWastedApplesOnLabelPage() {
+            const container = document.getElementById('wasted-apples-on-label-page');
+            container.innerHTML = '';
+
+            wastedApples.forEach((item) => {
+                const img = document.createElement('img');
+                img.src = item.path;
+                img.className = 'wasted-apple';
+                img.alt = 'wasted apple';
+                
+                const rot = Math.random() * 40 - 20;
+                img.style.setProperty('--rotation', `${rot}deg`);
+                
+                img.onclick = function() {
+                    renderLabel(item.index);
+                };
+                
+                img.onerror = function() {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'error-placeholder wasted-apple';
+                    placeholder.style.setProperty('--rotation', `${rot}deg`);
+                    placeholder.innerText = item.path;
+                    placeholder.onclick = function() {
+                        renderLabel(item.index);
+                    };
+                    container.appendChild(placeholder);
+                };
+                
+                container.appendChild(img);
+            });
+        }
+    </script>
+</body>
+</html>
